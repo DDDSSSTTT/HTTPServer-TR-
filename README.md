@@ -1,5 +1,5 @@
 # TritonHTTP
-Don't plagerize the project! Only for display
+Don't submit the project for your own homework! Only for display
 ## Spec Summary
 
 Here we provide a concise summary of the TritonHTTP spec. You should read the spec doc for more details and clarifications.
