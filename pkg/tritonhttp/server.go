@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -143,6 +144,10 @@ func (s *Server) HandleConnection(conn net.Conn) {
 
 			} else {
 				//No bytes, direct cutoff
+				res := &Response{}
+				res.HandleBadRequest()
+				_ = res.Write(conn)
+				time.Sleep(50 * time.Millisecond)
 				_ = conn.Close()
 			}
 
@@ -190,8 +195,8 @@ func (s *Server) HandleConnection(conn net.Conn) {
 func (s *Server) HandleGoodRequest(req *Request) (res *Response) {
 	res = &Response{}
 	res.HandleOK(req, s.DocRoot)
-	if req.URL == "/" {
-		req.URL = "/index.html"
+	if strings.HasSuffix(req.URL, "/") {
+		req.URL += "index.html"
 	}
 	res.FilePath = filepath.Join(s.DocRoot, req.URL)
 	res.Header = make(map[string]string)
@@ -201,7 +206,7 @@ func (s *Server) HandleGoodRequest(req *Request) (res *Response) {
 	res.Header["Date"] = FormatTime(time.Now())
 	// Hint: use the other methods below
 	file, err := os.Stat(res.FilePath)
-	if err != nil {
+	if err != nil || file == nil {
 		// Not Found
 		res.HandleNotFound(req)
 		return res

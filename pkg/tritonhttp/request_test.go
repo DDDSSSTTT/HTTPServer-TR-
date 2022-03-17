@@ -100,6 +100,10 @@ func TestReadBadRequest(t *testing.T) {
 			"Empty",
 			"\r\n",
 		},
+		{
+			name: "InvalidProto",
+			req:  "GET /index.html HTTP/1.0\r\n",
+		},
 	}
 
 	for _, tt := range tests {

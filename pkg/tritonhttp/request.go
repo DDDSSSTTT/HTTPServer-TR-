@@ -3,6 +3,7 @@ package tritonhttp
 import (
 	"bufio"
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -43,6 +44,9 @@ func badStringError(what, val string) error {
 func validMethod(method string) bool {
 	return method == "GET"
 }
+func validProto(proto string) bool {
+	return proto == "HTTP/1.1"
+}
 
 func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error) {
 
@@ -56,10 +60,15 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 		return nil, false, badStringError("Empty start line", line)
 	}
 	firstline, err := parseRequestLine(line)
+	if len(firstline) < 1 {
+		return nil, false, badStringError("empty request", "")
+	}
 	req.Method = firstline[0]
 	req.URL = firstline[1]
 	req.Proto = firstline[2]
-
+	if req.Proto == "" {
+		return nil, true, badStringError("missing proto", req.Proto)
+	}
 	if err != nil {
 		return nil, true, badStringError("malformed start line", line)
 	}
@@ -67,12 +76,22 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 	if !validMethod(req.Method) {
 		return nil, true, badStringError("invalid method", req.Method)
 	}
+	u, err := url.ParseRequestURI(req.URL)
+	if err != nil {
+		return nil, true, badStringError("malformed URL", u.String())
+	}
+	if !validProto(req.Proto) {
+		return nil, true, badStringError("invalid proto", req.Proto)
+	}
 	// TODO:Maybe I should write a URL Checker here.
 	// Read headers
 	req.Header = make(map[string]string)
 	for {
 		line, err := ReadLine(br)
 		if err != nil {
+			if req.Host == "" {
+				return nil, true, badStringError("Missing Host", "")
+			}
 			//EOF error
 			return nil, true, err
 		}

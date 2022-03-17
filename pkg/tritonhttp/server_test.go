@@ -117,8 +117,25 @@ func TestHandleGoodRequest(t *testing.T) {
 			map[string]string{},
 			"",
 		},
-	}
 
+		{
+			"NotFoundUnderDocRoot",
+			&Request{
+				Method: "GET",
+				URL:    "/docroot/",
+				Proto:  "HTTP/1.1",
+				Header: map[string]string{},
+				Host:   "test",
+				Close:  false,
+			},
+			404,
+			[]string{
+				"Date",
+			},
+			map[string]string{},
+			"",
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Server{
