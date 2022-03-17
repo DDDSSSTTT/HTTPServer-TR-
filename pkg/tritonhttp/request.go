@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 )
 
@@ -50,6 +49,13 @@ func validMethod(method string) bool {
 func validProto(proto string) bool {
 	return proto == "HTTP/1.1"
 }
+func validURL(url string) bool {
+	if !strings.HasPrefix(url, "/") {
+		return false
+	} else {
+		return true
+	}
+}
 
 func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error) {
 
@@ -90,9 +96,8 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 	if !validMethod(req.Method) {
 		return nil, true, badStringError("invalid method", req.Method)
 	}
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return nil, true, badStringError("malformed URL", u.String())
+	if !validURL(req.URL) {
+		return nil, true, badStringError("malformed URL", req.URL)
 	}
 	if !validProto(req.Proto) {
 		return nil, true, badStringError("invalid proto", req.Proto)
@@ -114,6 +119,9 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 			break
 		}
 		s := strings.SplitN(line, ": ", 2)
+		if len(s) < 2 {
+			return nil, true, badStringError("Malformed Header", line)
+		}
 		switch {
 		// Handle special headers
 		case s[0] == "Host":
