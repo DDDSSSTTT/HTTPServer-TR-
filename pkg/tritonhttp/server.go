@@ -148,10 +148,6 @@ func (s *Server) HandleConnection(conn net.Conn) {
 			} else {
 				//No bytes, direct cutoff
 				log.Printf("Got no Bytes")
-				//res := &Response{}
-				//res.HandleBadRequest()
-				//_ = res.Write(conn)
-				//time.Sleep(50 * time.Millisecond)
 				_ = conn.Close()
 			}
 
@@ -184,7 +180,6 @@ func (s *Server) HandleConnection(conn net.Conn) {
 
 		if res.StatusCode == statusNotFound {
 			err = res.Write(conn)
-			conn.Close()
 		} else {
 			err = res.Write(conn)
 			if err != nil {
