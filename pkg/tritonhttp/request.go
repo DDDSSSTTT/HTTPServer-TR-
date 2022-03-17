@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 )
 
@@ -91,14 +90,9 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 	if !validMethod(req.Method) {
 		return nil, true, badStringError("invalid method", req.Method)
 	}
-	u, err := url.ParseRequestURI(req.URL)
+	u, err := url.Parse(req.URL)
 	if err != nil {
 		return nil, true, badStringError("malformed URL", u.String())
-	}
-	file, err := os.Stat(req.URL)
-	if err != nil || file == nil {
-		// Not Found
-		return nil, true, err404
 	}
 	if !validProto(req.Proto) {
 		return nil, true, badStringError("invalid proto", req.Proto)

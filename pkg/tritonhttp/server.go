@@ -205,14 +205,20 @@ func (s *Server) HandleGoodRequest(req *Request) (res *Response) {
 	if strings.HasSuffix(req.URL, "/") {
 		req.URL += "index.html"
 	}
-	res.FilePath = filepath.Join(s.DocRoot, req.URL)
+
 	res.Header = make(map[string]string)
 	if req.Close {
 		res.Header["Connection"] = "close"
 	}
+	res.FilePath = filepath.Join(s.DocRoot, req.URL)
+	file, err := os.Stat(res.FilePath)
+	if err != nil || file == nil {
+		// Not Found
+		res.HandleNotFound(req)
+		return res
+	}
 	res.Header["Date"] = FormatTime(time.Now())
 	// Hint: use the other methods below
-	file, err := os.Stat(res.FilePath)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -249,4 +255,5 @@ func (res *Response) HandleNotFound(req *Request) {
 	res.init()
 	res.StatusCode = statusNotFound
 	res.FilePath = ""
+	res.Header["Date"] = ""
 }
