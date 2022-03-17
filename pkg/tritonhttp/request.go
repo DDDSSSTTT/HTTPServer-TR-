@@ -66,6 +66,7 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 	req.Method = firstline[0]
 	req.URL = firstline[1]
 	req.Proto = firstline[2]
+	req.Close = false
 	if req.Proto == "" {
 		return nil, true, badStringError("missing proto", req.Proto)
 	}

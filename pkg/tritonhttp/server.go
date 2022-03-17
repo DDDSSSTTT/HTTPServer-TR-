@@ -115,16 +115,18 @@ func (s *Server) HandleConnection(conn net.Conn) {
 		// Try to read next request
 		if ddl_err := conn.SetReadDeadline(time.Now().Add(timeout)); ddl_err != nil {
 			log.Printf("Start Deadline failed for connection %v", conn)
-			res := &Response{}
-			res.HandleBadRequest()
-			_ = res.Write(conn)
-			time.Sleep(500 * time.Millisecond)
+			//res := &Response{}
+			//res.HandleBadRequest()
+			//_ = res.Write(conn)
 			_ = conn.Close()
 			return
 		}
 		req, bytes_received, err := ReadRequest(input)
 		// Handle EOF
 		if errors.Is(err, io.EOF) {
+			res := &Response{}
+			res.HandleBadRequest()
+			_ = res.Write(conn)
 			log.Printf("Connection closed by %v", conn.RemoteAddr())
 			_ = conn.Close()
 			return
@@ -133,9 +135,10 @@ func (s *Server) HandleConnection(conn net.Conn) {
 		// timeout in this application means the otherside stop to send any further information
 		// Maybe connection lost?
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			log.Printf("Connection to %v timed out", conn.RemoteAddr())
+			log.Printf("[server:138]]onnection to %v timed out", conn.RemoteAddr())
 			if bytes_received {
 				//At least some bytes arrived
+				log.Printf("Got some bytes")
 				res := &Response{}
 				res.HandleBadRequest()
 				_ = res.Write(conn)
@@ -144,20 +147,17 @@ func (s *Server) HandleConnection(conn net.Conn) {
 
 			} else {
 				//No bytes, direct cutoff
-				res := &Response{}
-				res.HandleBadRequest()
-				_ = res.Write(conn)
-				time.Sleep(50 * time.Millisecond)
+				log.Printf("Got no Bytes")
+				//res := &Response{}
+				//res.HandleBadRequest()
+				//_ = res.Write(conn)
+				//time.Sleep(50 * time.Millisecond)
 				_ = conn.Close()
 			}
 
 			return
 		}
-		if bytes_received != true {
-			log.Printf(("bytes_received is false, check out the code to see what goes wrong"))
-			_ = conn.Close()
-			return
-		}
+
 		// Handle the BAD request which is not a GET
 		//immediately close the connection and return
 		if err != nil {
@@ -169,23 +169,24 @@ func (s *Server) HandleConnection(conn net.Conn) {
 			return
 		}
 
-		// Handle good request
-		log.Printf("Handle good request: ")
 		for each_k, each_v := range req.Header {
 			log.Printf("Header[%s]: %s\r\n", each_k, each_v)
 		}
+		// Handle good request
+		log.Printf("Handle good request: ")
 		res := s.HandleGoodRequest(req)
 
-		err = res.Write(conn)
-		if err != nil {
-			fmt.Println(err)
-		}
 		if res.StatusCode == statusNotFound {
+			err = res.Write(conn)
 			conn.Close()
+		} else {
+			err = res.Write(conn)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 		// Close conn if requested
 		if req.Close == true {
-
 			conn.Close()
 		}
 	}

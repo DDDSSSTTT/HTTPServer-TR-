@@ -126,7 +126,8 @@ func TestSingleRequest(t *testing.T) {
 			if err := tt.resChecker.Check(br); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := br.ReadByte(); !errors.Is(err, io.EOF) {
+			if these_bytes, err := br.ReadByte(); !errors.Is(err, io.EOF) {
+				t.Logf(string(these_bytes))
 				t.Fatalf("response has extra bytes when it should end")
 			}
 		})
