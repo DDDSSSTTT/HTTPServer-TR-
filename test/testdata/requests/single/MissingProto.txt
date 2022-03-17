@@ -1,0 +1,4 @@
+GET /index.html
+Host: test
+Connection: close
+

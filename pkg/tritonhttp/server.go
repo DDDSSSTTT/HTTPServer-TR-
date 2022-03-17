@@ -158,8 +158,14 @@ func (s *Server) HandleConnection(conn net.Conn) {
 			return
 		}
 
-		// Handle the BAD request which is not a GET
-		//immediately close the connection and return
+		if errors.Is(err, err404) {
+			log.Printf("Handle 404 error: %v", err)
+			res := &Response{}
+			res.HandleNotFound(req)
+			_ = res.Write(conn)
+			_ = conn.Close()
+			return
+		}
 		if err != nil {
 			log.Printf("Handle bad request for error: %v", err)
 			res := &Response{}
@@ -207,16 +213,13 @@ func (s *Server) HandleGoodRequest(req *Request) (res *Response) {
 	res.Header["Date"] = FormatTime(time.Now())
 	// Hint: use the other methods below
 	file, err := os.Stat(res.FilePath)
-	if err != nil || file == nil {
-		// Not Found
-		res.HandleNotFound(req)
-		return res
-	} else {
-		res.Header["Last-Modified"] = FormatTime(file.ModTime())
-
-		res.Header["Content-Type"] = MIMETypeByExtension(filepath.Ext(res.FilePath))
-		res.Header["Content-Length"] = strconv.FormatInt(file.Size(), 10)
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
+	res.Header["Last-Modified"] = FormatTime(file.ModTime())
+
+	res.Header["Content-Type"] = MIMETypeByExtension(filepath.Ext(res.FilePath))
+	res.Header["Content-Length"] = strconv.FormatInt(file.Size(), 10)
 
 	return res
 

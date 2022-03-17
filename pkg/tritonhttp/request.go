@@ -2,10 +2,14 @@ package tritonhttp
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 )
+
+var err404 = errors.New("404 Not Found")
 
 type Request struct {
 	Method string // e.g. "GET"
@@ -60,8 +64,18 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 		return nil, false, badStringError("Empty start line", line)
 	}
 	firstline, err := parseRequestLine(line)
-	if len(firstline) < 1 {
-		return nil, false, badStringError("empty request", "")
+	L := len(firstline)
+	if L != 3 {
+		switch {
+		case L == 0:
+			return nil, false, badStringError("empty request", "")
+		case L == 1:
+			return nil, false, badStringError("missing URL", "")
+		case L == 2:
+			return nil, false, badStringError("missing proto", "")
+
+		}
+
 	}
 	req.Method = firstline[0]
 	req.URL = firstline[1]
@@ -80,6 +94,11 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 	u, err := url.ParseRequestURI(req.URL)
 	if err != nil {
 		return nil, true, badStringError("malformed URL", u.String())
+	}
+	file, err := os.Stat(req.URL)
+	if err != nil || file == nil {
+		// Not Found
+		return nil, true, err404
 	}
 	if !validProto(req.Proto) {
 		return nil, true, badStringError("invalid proto", req.Proto)
