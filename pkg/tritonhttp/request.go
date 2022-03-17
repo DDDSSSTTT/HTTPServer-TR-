@@ -90,10 +90,10 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 	for {
 		line, err := ReadLine(br)
 		if err != nil {
+			//EOF error
 			if req.Host == "" {
 				return nil, true, badStringError("Missing Host", "")
 			}
-			//EOF error
 			return nil, true, err
 		}
 		if line == "" {
@@ -111,6 +111,9 @@ func ReadRequest(br *bufio.Reader) (req *Request, bytesReceived bool, err error)
 			req.Header[CanonicalHeaderKey(s[0])] = strings.TrimSpace(s[1])
 		}
 
+	}
+	if req.Host == "" {
+		return nil, true, badStringError("Missing Host", "")
 	}
 
 	return req, true, err
