@@ -122,7 +122,7 @@ func TestHandleGoodRequest(t *testing.T) {
 			"NotFoundUnderDocRoot",
 			&Request{
 				Method: "GET",
-				URL:    "/docroot/",
+				URL:    "/abcde.html",
 				Proto:  "HTTP/1.1",
 				Header: map[string]string{},
 				Host:   "test",

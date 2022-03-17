@@ -201,22 +201,23 @@ func (s *Server) HandleConnection(conn net.Conn) {
 // HandleGoodRequest handles the valid req and generates the corresponding res.
 func (s *Server) HandleGoodRequest(req *Request) (res *Response) {
 	res = &Response{}
-	res.HandleOK(req, s.DocRoot)
 	if strings.HasSuffix(req.URL, "/") {
 		req.URL += "index.html"
 	}
-
 	res.Header = make(map[string]string)
 	if req.Close {
 		res.Header["Connection"] = "close"
 	}
 	res.FilePath = filepath.Join(s.DocRoot, req.URL)
 	res.FilePath = filepath.Clean(res.FilePath)
+	fmt.Println(res.FilePath)
 	file, err := os.Stat(res.FilePath)
 	if err != nil || file == nil {
 		// Not Found
 		res.HandleNotFound(req)
 		return res
+	} else {
+		res.HandleOK(req, s.DocRoot)
 	}
 	res.Header["Date"] = FormatTime(time.Now())
 	// Hint: use the other methods below
