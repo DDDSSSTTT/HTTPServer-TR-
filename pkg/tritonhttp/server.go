@@ -210,6 +210,10 @@ func (s *Server) HandleGoodRequest(req *Request) (res *Response) {
 	}
 	res.FilePath = filepath.Join(s.DocRoot, req.URL)
 	res.FilePath = filepath.Clean(res.FilePath)
+	if !strings.HasPrefix(res.FilePath, s.DocRoot) {
+		res.HandleNotFound(req)
+		return res
+	}
 	fmt.Println(res.FilePath)
 	file, err := os.Stat(res.FilePath)
 	if err != nil || file == nil {
